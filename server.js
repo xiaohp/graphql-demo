@@ -4,17 +4,35 @@ var { buildSchema } = require('graphql');
 
 // 使用 GraphQL schema language 构建一个 schema
 var schema = buildSchema(`
+    input MessageInput {
+      content: String
+      author: String
+    }
+
+    type Message {
+      id: ID!
+      content: String
+      author: String
+    }
+
+    type Mutation {
+      createMessage(input: MessageInput): Message
+      updateMessage(id: ID!, input: MessageInput): Message
+    }
+
     type RandomDie {
         numSides: Int!
         rollOnce: Int!
         roll(numRolls: Int!): [Int]
     }
+
     type Query {
         quoteOfTheDay: String
         random: Float!
         rollThreeDice: [Int]
         rollDice(numDice: Int!, numSides: Int): [Int]
         getDie(numSides: Int): RandomDie
+        getMessage(id: ID!): Message
     }
 `);
 
@@ -37,6 +55,17 @@ class RandomDie {
   }
 }
 
+// 如果 Message 拥有复杂字段，我们把它们放在这个对象里面。
+class Message {
+  constructor(id, {content, author}) {
+    this.id = id;
+    this.content = content;
+    this.author = author;
+  }
+}
+
+// 映射 username 到 content
+var fakeDatabase = {};
 
 // root 将会提供每个 API 入口端点的解析函数
 var root = {
@@ -58,9 +87,29 @@ var root = {
             output.push(1 + Math.floor(Math.random() * (numSides || 6)));
         }
         return output;
-    }
-};
+    },
+    getMessage: function ({id}) {
+      if (!fakeDatabase[id]) {
+        throw new Error('no message exists with id ' + id);
+      }
+      return new Message(id, fakeDatabase[id]);
+    },
+    createMessage: function ({input}) {
+      // Create a random id for our "database".
+      var id = require('crypto').randomBytes(10).toString('hex');
 
+      fakeDatabase[id] = input;
+      return new Message(id, input);
+    },
+    updateMessage: function ({id, input}) {
+      if (!fakeDatabase[id]) {
+        throw new Error('no message exists with id ' + id);
+      }
+      // This replaces all old data, but some apps might want partial update.
+      fakeDatabase[id] = input;
+      return new Message(id, input);
+    },
+};
 
 var app = express();
 app.use('/graphql', graphqlHTTP({
