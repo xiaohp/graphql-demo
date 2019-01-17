@@ -8,8 +8,10 @@ var schema = buildSchema(`
     quoteOfTheDay: String
     random: Float!
     rollThreeDice: [Int]
+    rollDice(numDice: Int!, numSides: Int): [Int]
   }
 `);
+
 
 // root 将会提供每个 API 入口端点的解析函数
 var root = {
@@ -22,7 +24,15 @@ var root = {
   rollThreeDice: () => {
     return [1, 2, 3].map(_ => 1 + Math.floor(Math.random() * 6));
   },
+  rollDice: function ({numDice, numSides}) {
+    var output = [];
+    for (var i = 0; i < numDice; i++) {
+      output.push(1 + Math.floor(Math.random() * (numSides || 6)));
+    }
+    return output;
+  }
 };
+
 
 var app = express();
 app.use('/graphql', graphqlHTTP({
