@@ -2,7 +2,7 @@
   "name": "graphql-demo",
   "version": "1.0.0",
   "description": "a GraphQL demo",
-  "main": "index.js",
+  "main": "server.js",
   "repository": "https://github.com/xiaohp/graphql-demo.git",
   "author": "xiaohp <xiaohp1993@gmail.com>",
   "license": "MIT",
